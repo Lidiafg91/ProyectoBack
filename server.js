@@ -256,18 +256,47 @@ app.get('/traerTorneo', function(req, res) {
 // enviar datos del ganador a la BD
 app.post("/enviarGanador", function (req, res) {
   console.log("console CrearEquipo", req.body);
-  var newGanadores = { $push: { ganadores: req.body.resultados } };
-  console.log(data);
   MongoClient.connect(url, function (err, db) {
     if (err) throw err;
-    
+    var dbo = db.db("proyectfinal");
+   
+
+    dbo
+      .collection("Torneos")
+      .find( { "ganadores.indice" : { $eq:req.body.indice } })
+      .toArray(function (err, result) {
+        if (err) throw err;
+        console.log(req.body);
+        console.log("Resultado para indice", result);
+        res.end(JSON.stringify(result));
+        var changeGanadores = { $set: { resultados: req.body.resultados } };
+        let myQueryIndice = { "ganadores.indice": req.body.indice };
+        if(result.length > 0){
+         
+    console.log("ESTE ES EL REQ.BODY",req.body.resultados)
+    var dbo = db.db("proyectfinal");
+    // var myqueryUser = { nombre: data.nombreUsuario };
+    // .updateOne(myqueryUser, newvaluesUser, function (err, res) {
+
+
+    dbo.collection("Torneos").updateOne(myQueryIndice,changeGanadores, function (err, res) {
+      if (err) throw err;
+      console.log("1 Torneo insertado");
+      db.close();
+    });
+    res.end(JSON.stringify(changeGanadores));
+        }else{
+       var newGanadores = { $push: { "ganadores": req.body } };
+      console.log(req.body);
     var dbo = db.db("proyectfinal");
     dbo.collection("Torneos").updateOne({},newGanadores, function (err, res) {
       if (err) throw err;
       console.log("1 Torneo insertado");
       db.close();
     });
-    res.end(JSON.stringify(data));
+    res.end(JSON.stringify(newGanadores));
+        }
+      });
   });
 });
 
